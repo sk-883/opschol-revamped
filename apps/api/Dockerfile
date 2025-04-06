@@ -1,47 +1,57 @@
+# Use a lightweight Node 18 Alpine image as the base for all stages
 FROM node:18-alpine AS base
 
-# The web Dockerfile is copy-pasted into our main docs at /docs/handbook/deploying-with-docker.
-# Make sure you update this Dockerfile, the Dockerfile in the web workspace and copy that over to Dockerfile in the docs.
-
+#################################
+# Stage 1: Builder
+#################################
 FROM base AS builder
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk update
-RUN apk add --no-cache libc6-compat
-# Set working directory
+# Update apk and install libc6-compat for native module support
+RUN apk update && apk add --no-cache libc6-compat
 WORKDIR /app
-RUN yarn global add turbo
+
+# Install Turbo globally with npm
+RUN npm install -g turbo
+
+# Copy the entire project into the container
 COPY . .
+
+# Prune the project for the "api" workspace to reduce size.
+# (Ensure your Turbo configuration supports this command)
 RUN turbo prune api --docker
 
-# Add lockfile and package.json's of isolated subworkspace
+#################################
+# Stage 2: Installer
+#################################
 FROM base AS installer
-RUN apk update
-RUN apk add --no-cache libc6-compat
+RUN apk update && apk add --no-cache libc6-compat
 WORKDIR /app
 
-# First install dependencies (as they change less often)
+# Copy pruned files (lockfiles, package.json, etc.) from builder
 COPY --from=builder /app/out/json/ .
-RUN yarn install
 
-# Build the project and its dependencies
+# Install dependencies using npm.
+# Use npm ci for a clean, reproducible install if you have a package-lock.json
+RUN npm ci
+
+# Copy the full pruned project files
 COPY --from=builder /app/out/full/ .
 
-# Uncomment and use build args to enable remote caching
-# ARG TURBO_TEAM
-# ENV TURBO_TEAM=$TURBO_TEAM
+# Build the project using npm. Ensure your package.json has a build script, e.g. "build": "turbo run build"
+RUN npm run build
 
-# ARG TURBO_TOKEN
-# ENV TURBO_TOKEN=$TURBO_TOKEN
-
-RUN yarn turbo build
-
+#################################
+# Stage 3: Runner
+#################################
 FROM base AS runner
 WORKDIR /app
 
-# Don't run production as root
-RUN addgroup --system --gid 1001 expressjs
-RUN adduser --system --uid 1001 expressjs
+# Create a non-root user for security
+RUN addgroup --system --gid 1001 expressjs && \
+    adduser --system --uid 1001 expressjs
 USER expressjs
+
+# Copy the built application from the installer stage
 COPY --from=installer /app .
 
-CMD node apps/api/dist/index.js
+# Define the container's entry point
+CMD ["node", "apps/api/dist/index.js"]
