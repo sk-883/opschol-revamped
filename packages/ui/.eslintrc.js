@@ -6,4 +6,8 @@ module.exports = {
   parserOptions: {
     project: true,
   },
+    plugins: ["unused-imports"],
+    rules: {
+      "unused-imports/no-unused-imports": "error"
+    },
 };
