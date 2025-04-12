@@ -11,6 +11,7 @@ services:
       - 3000:3000
     networks:
       - app_network
+
   api:
     container_name: api
     build:
@@ -22,8 +23,33 @@ services:
     networks:
       - app_network
 
-# Define a network, which allows containers to communicate
-# with each other, by using their container name as a hostname
+  redis:
+    image: redis
+    container_name: redis-server
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_volume:/data
+    networks:
+      - app_network
+
+  postgres:
+    image: postgres
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+volumes:
+  redis_volume:
+  postgres_volume:
+
 networks:
   app_network:
     external: true

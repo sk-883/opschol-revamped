@@ -22,7 +22,8 @@
     "express": "^4.18.3",
     "morgan": "^1.10.0",
         "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "@repo/db": "*"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
