@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Card } from "@repo/ui/card";
-
+import { PrismaClient } from "@repo/db";
+import Butto from "./butto";
 function Gradient({
   conic,
   className,
@@ -44,6 +45,18 @@ const LINKS = [
 ];
 
 export default function Page() {
+  // const prisma= new PrismaClient();
+  // async function entry(){
+  //   const newCustomer = await prisma.customer.create({
+  //     data: {
+  //       firstName: 'John',
+  //       lastName: 'Doe',
+  //       email: 'john.doe@example.com',
+  //       phone: '1234567890',
+  //       address: '123 Main St',
+  //     },
+  //   });
+  // }
   return (
     <main className="flex flex-col items-center justify-between min-h-screen p-24">
       <div className="z-10 items-center justify-between w-full max-w-5xl font-mono text-sm lg:flex">
@@ -133,7 +146,9 @@ export default function Page() {
           </Card>
         ))}
       </div>
-      <div className="text-xl">odfhbhsdf</div>
+      {/* <button onClick={entry}>clickme</button>
+       */}
+       <Butto />
     </main>
   );
 }
